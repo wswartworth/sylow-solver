@@ -45,6 +45,7 @@ class Disjunction:
     
     def doPrint(self):
         facts = self.facts
+        print(self.label, ":")
         for i in range(0,len(facts)):
             facts[i].doPrint()
             if(i != len(facts) - 1):
@@ -681,6 +682,11 @@ def transitive_action(G, n):
 #number of elements of order p^k for some k>0 is at least N
 def order_pk_lower_bound(G, p, N):
     return Fact("order_pk_lower_bound", [G, p, N])
+
+
+
+def OR(f1,f2):
+    return Disjunction([f1,f2])
     
     
 ####################################### THEOREMS #######################################
@@ -848,31 +854,33 @@ count_order_pk_elements = HyperTheorem(inFacts, rule, "count_order_pk_elements")
 
 #getting a contradiction by counting
 #really should be varargs
-inFacts = [order_pk_lower_bound('G', 'p1', 'N1'),order_pk_lower_bound('G', 'p2', 'N2'),
-    order_pk_lower_bound('G', 'p3', 'N3'), order('G','n')]
+inFacts = [order_pk_lower_bound('G', 'p1', 'N1'),order_pk_lower_bound('G', 'p2', 'N2'), order('G','n')]
 def rule(facts):
     print("COUNTING")
     conclusions = []
     p1 = int(facts[0].args[1])
     p2 = int(facts[1].args[1])
-    p3 = int(facts[2].args[1])
+    #p3 = int(facts[2].args[1])
     N1 = int(facts[0].args[2])
     N2 = int(facts[1].args[2])
-    N3 = int(facts[2].args[2])
-    n = int(facts[3].args[1])
-    if p1 == p2 or p1==p3 or p2==p3: 
-        return [] #not actually a good approach
-    if N1 + N2 + N3 + 1 > n: #too many elements
-        print("CONTRADICTION")
-        print("N1,N2,N3: ", N1, N2, N3)
-        print("p1,p2,p3: ", p1, p2, p3)
+   # N3 = int(facts[2].args[2])
+    n = int(facts[2].args[1])
+    #if p1 == p2 or p1==p3 or p2==p3: 
+      #  return [] #not actually a good approach
+    if p1 == p2:
+        return []
+
+    if N1 + N2 + 1 > n: #too many elements
+        #print("CONTRADICTION")
+       # print("N1,N2,N3: ", N1, N2, N3)
+        #print("p1,p2,p3: ", p1, p2, p3)
         return [false()]
     else:
         return conclusions
 counting_contradiction = HyperTheorem(inFacts, rule, "counting_contradiction")
     
 
-thmList = [sylowTheorem,
+thmList = [#sylowTheorem,
            singleSylow_notSimple,
            simple_not_simple,
            #alternating_order,
@@ -887,7 +895,7 @@ thmList = [sylowTheorem,
            counting_contradiction
            ]
 
-thmNames = {"sylow":sylowTheorem,
+thmNames = {#"sylow":sylowTheorem,
             "not_simple":singleSylow_notSimple,
             "simple_not_simple":simple_not_simple,
             #"alternating_order":alternating_order,
@@ -1080,7 +1088,26 @@ def alternatingTest():
     pfEnvir = ProofEnvironment([fact1,fact2,fact3], thmList, thmNames, goal)
     autoSolve(pfEnvir)
 
+def orderCountingTest():
+    global thmList
+    global thmNames
+    
+    fact1 = group('G')
+    fact2 = order('G', '30')
+    fact3 = num_sylow('5', 'G', '6')
+    fact4 = OR(num_sylow('3', 'G', '10'), num_sylow('3','G', '1'))
+    fact5 = sylow_p_subgroup('P5', '5', 'G')
+    fact6 = sylow_p_subgroup('P3', '3', 'G')
+    fact7 = order('P5', '5')
+    fact8 = order('P3', '3')
+    fact9 = simple('G')
+
+    factList = [fact1, fact2, fact3, fact4, fact5, fact6, fact7, fact8]
+    pfEnvir = ProofEnvironment(factList, thmList, thmNames, false())
+    autoSolve(pfEnvir)
 
 
 
-autoTest2()
+
+orderCountingTest()
+#autoTest2()

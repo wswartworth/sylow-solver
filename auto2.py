@@ -76,6 +76,7 @@ class HyperTheorem:
         self.facts = facts
         self.rule = rule
         self.name = name
+        self.multiArgs = False #can the theorem take multiple arguments?
  
 class ProofEnvironment:
  
@@ -534,7 +535,6 @@ def match_facts_to_theorem(thm_facts, facts, newFacts = None):
 #find all facts that match a given template structure
 #also returns the associated matching dict
 #optional argument initMatchDict gives literals corresponding to a subset of arguments in template
-#NEED TO ADD SUPPORT FOR *: Done
 #not necessarily as efficient as possible
 def match_facts_to_template(template, facts, initMatchDict = {}):
     matches = []
@@ -629,42 +629,57 @@ def autoSolve(pfEnvir):
         
 ################################### FACT GENERATORS ######################################        
 
+#G is a group
 def group(G):
     return Fact("group", [G])
 
+#the order of G is n
 def order(G,n):
     return Fact("order", [G, n])
 
+#P is a sylow p-subgroup of G
 def sylow_p_subgroup(P, p, G):
     return Fact("sylow_p_subgroup", [P, p, G])
 
+#A is the alternating group on n letters
 def alternating_group(A, n):
     return Fact("alternating_group", [A, n])
 
+#the number of sylow p-subgroups of G is n
 def num_sylow(p, G, n):
     return Fact("num_sylow", [p,G,n])
 
+#G is simple
 def simple(G):
     return Fact("simple", [G])
 
+#G is not simple
 def not_simple(G):
     return Fact("not_simple", [G])
 
+#H is a subgroup of G
 def subgroup(H, G):
     return Fact("subgroup", [H,G])
 
+#m divides n
 def divides(m, n):
     return Fact("divides", [m,n])
 
+#a false statement
 def false():
     return Fact("false", [])
 
+#H's index in G is n
 def index(G, H, n):
     return Fact("index", [G, H, n])
 
 #G acts transitively on a set of size n
 def transitive_action(G, n):
     return Fact("transitive_action", [G, n])
+
+#
+def order_pk_lower_bound(G, p, N):
+    return Fact("order_pk_lower_bound", [G, p, N])
     
     
 ####################################### THEOREMS #######################################
@@ -740,6 +755,7 @@ def rule(facts):
     n = int(facts[0].args[1])
 
     if n > 1000:  #huge factorial computions are extremely slow/impossible
+                  #Ugly, but it works.  Other approaches?
         return []
     
     if n == 1:

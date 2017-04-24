@@ -600,13 +600,14 @@ def autoSolve(pfEnvir):
                 
  #              if(len(factsFromTheorem) > 0): encounteredMatch = True
 
-
-                newFacts += factsFromTheorem
+                if factsFromTheorem: #sometimes the theorem match might be invalid. FIX?
+                                    #FIX move encounteredMatch here
+                    newFacts += factsFromTheorem
                 thmMatches[thm].remove(match) #prevent reapplying theorems
             
         if not encounteredMatch:
             print("Out of facts")
- #           pfEnvir.execCommand("display")
+            pfEnvir.execCommand("display")
             return
  #       else:
  #           print("not out of facts yet")
@@ -620,9 +621,9 @@ def autoSolve(pfEnvir):
             pfEnvir.execCommand("display")
             return
         else:
-            print("******************************************")
-            pfEnvir.execCommand("display")
-            print("******************************************")
+          #  print("******************************************")
+           # pfEnvir.execCommand("display")
+            #print("******************************************")
             print("next iteration")
                 
                 
@@ -677,7 +678,7 @@ def index(G, H, n):
 def transitive_action(G, n):
     return Fact("transitive_action", [G, n])
 
-#
+#number of elements of order p^k for some k>0 is at least N
 def order_pk_lower_bound(G, p, N):
     return Fact("order_pk_lower_bound", [G, p, N])
     
@@ -697,6 +698,7 @@ def rule(facts):
         sylowOrder = p ** sylow2.max_p_divisor(groupOrder, p)
  #       conclusions.append(Fact("sylow_p_subgroup", ['?'+ str(p), str(p), groupName]))
         conclusions.append(sylow_p_subgroup('?' + str(p), str(p), groupName) )
+        conclusions.append(order('?' + str(p), str(sylowOrder)) )
         n_pList = sylow2.num_sylow(p,groupOrder)
         disFacts = []
         for n_p in n_pList:
@@ -814,44 +816,90 @@ inFacts = [index('G', 'H', 'n')]
 outFacts = [transitive_action('G', 'n')]
 coset_action = Theorem(inFacts, outFacts, "coset_action")
 
+######
 inFacts = [transitive_action('G', 'n'), simple('G')]
 def rule(facts):
-    
- #   print("applying simple_group_action") #TEST
-    
     conclusions = []
     n = int(facts[0].args[1])
     if n > 1:
         conclusions = [subgroup('G', '?alt'), alternating_group('?alt', str(n))]
     return conclusions
-simple_group_action = HyperTheorem(inFacts, rule, "subgroup_index")                    
-    
+simple_group_action = HyperTheorem(inFacts, rule, "subgroup_index")
+
+#counting elements of order p^k
+inFacts = [sylow_p_subgroup('P', 'p', 'G'), num_sylow('p', 'G', 'n_p'), order('P','pk')]
+def rule(facts):
+    G = facts[0].args[2]
+    p = int(facts[0].args[1])
+    P = facts[0].args[0]
+    n_p = int(facts[1].args[2])
+    pk = int(facts[2].args[1])
+    if pk == p: #P is cylic of prime order
+        lower_bound = (p-1) * n_p
+    else: #not cyclic of prime order
+        if n_p == 1:
+            lower_bound = pk - 1
+        else:
+            lower_bound = pk #probably not optimal
+    conclusions = [order_pk_lower_bound(G, str(p), str(lower_bound))]
+    return conclusions
+
+count_order_pk_elements = HyperTheorem(inFacts, rule, "count_order_pk_elements")
+
+#getting a contradiction by counting
+#really should be varargs
+inFacts = [order_pk_lower_bound('G', 'p1', 'N1'),order_pk_lower_bound('G', 'p2', 'N2'),
+    order_pk_lower_bound('G', 'p3', 'N3'), order('G','n')]
+def rule(facts):
+    print("COUNTING")
+    conclusions = []
+    p1 = int(facts[0].args[1])
+    p2 = int(facts[1].args[1])
+    p3 = int(facts[2].args[1])
+    N1 = int(facts[0].args[2])
+    N2 = int(facts[1].args[2])
+    N3 = int(facts[2].args[2])
+    n = int(facts[3].args[1])
+    if p1 == p2 or p1==p3 or p2==p3: 
+        return [] #not actually a good approach
+    if N1 + N2 + N3 + 1 > n: #too many elements
+        print("CONTRADICTION")
+        print("N1,N2,N3: ", N1, N2, N3)
+        print("p1,p2,p3: ", p1, p2, p3)
+        return [false()]
+    else:
+        return conclusions
+counting_contradiction = HyperTheorem(inFacts, rule, "counting_contradiction")
     
 
 thmList = [sylowTheorem,
            singleSylow_notSimple,
            simple_not_simple,
-           alternating_order,
-           embed_in_An,
-           lagrange,
-           divides_contradiction,
-           alternating_simple,
-           subgroup_index,
-           coset_action,
-           simple_group_action
+           #alternating_order,
+           #embed_in_An,
+           #lagrange,
+           #divides_contradiction,
+           #alternating_simple,
+           #subgroup_index,
+           #coset_action,
+           #simple_group_action,
+           count_order_pk_elements,
+           counting_contradiction
            ]
 
 thmNames = {"sylow":sylowTheorem,
             "not_simple":singleSylow_notSimple,
             "simple_not_simple":simple_not_simple,
-            "alternating_order":alternating_order,
-            "embed_An": embed_in_An,
-            "lagrange":lagrange,
-            "divides_contradiction":divides_contradiction,
-            "alternating_simple": alternating_simple,
-            "subgroup_index": subgroup_index,
-            "coset_action": coset_action,
-            "simple_group_action": simple_group_action
+            #"alternating_order":alternating_order,
+            #"embed_An": embed_in_An,
+            #"lagrange":lagrange,
+            #"divides_contradiction":divides_contradiction,
+            #"alternating_simple": alternating_simple,
+            #"subgroup_index": subgroup_index,
+            #"coset_action": coset_action,
+            #"simple_group_action": simple_group_action,
+            "count_order_pk_elements": count_order_pk_elements,
+            "counting_cont": counting_contradiction
             }
 
 

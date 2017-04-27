@@ -127,27 +127,65 @@ class ProofEnvironment:
         label = letter + str(self.curFactNum)
         self.curFactNum += 1
         return label
+    
 
     #has the goal been achieved yet
     #goalFact is a new copy of goal used for the update
     def updateGoalAchieved(self, goalFact):
-        disLabels = set([D for D,i in goalFact.disAncestors]) #prevent duplicates
-#        disFacts = [ f.lbl for f in [self.factLabels[D].facts for D in disLabels] ] #the list of fact label lists corresponding to each disjunction
+
+        fullDisSet = set(D for D,i in set.union(* (self.goalDisCombos) ))
+        
+        disLabels = set(D for D in fullDisSet) #prevent duplicates
+ #       print("labels")
+#        print(disLabels)
+#        print("end labels")
+#        print()
+        
+ #       disLabels = set([D for D,i in goalFact.disAncestors]) #prevent duplicates
         L = [(D,len(self.factLabels[D].facts)) for D in disLabels]
-        #S = set() #list of all tuples of facts ( in the form (D,7) ) that need to exist
+ #       print("L: ")
+#        print(L)
+#        print()
         X = []
         for D, l in L:
             X.append([(D,i) for i in range(0,l)])
         S = list(itertools.product(*X))
-#        print("S :: ", S)
         S = set(frozenset(u) for u in S)
 
-#        print("goalDisCombos: ", self.goalDisCombos)
- #       print("S: ", S)
+#        print("S")
+#        print(S)
+#        print()
 
+
+        #all we need to do is check that for each guy in S, some guy in frozenDisCombos is a subset
         frozenDisCombos = set(frozenset(d) for d in self.goalDisCombos)
-        if frozenDisCombos.issuperset(S): #SET UP SO NO CASTING
-            self.goalAchieved = True
+        #if frozenDisCombos.issuperset(S): #SET UP SO NO CASTING
+        #    self.goalAchieved = True
+        for s in S:
+            found_implication = False
+            for dtuple in frozenDisCombos:
+                if dtuple.issubset(s):
+                    found_implication = True
+                    continue
+            if not found_implication:
+                return
+
+        #if we made it
+        self.goalAchieved = True
+                    
+
+ #   def checkGoalAchieved(self, goalFact):
+#        disLabels = set([D for D,i in goalDisjunctionDependencies])
+#        L = [(D,len(self.factLabels[D].facts)) for D in disLabels] #size of each disjunction in terms of number of facts
+#        
+#        X = [] #list of lists of disjunction facts e.g. [ [(D1,1),(D1,2)], [(D2,1),(D2,2),(D2,3)] ]
+#        for D, l in L:
+#            X.append([(D,i) for i in range(0,l)])
+        
+#        S = list(itertools.product(*X))
+#        S = set(frozenset(u) for u in S) #set of all tuples of disjunctions that need to be checked
+#        frozenDisCombos = set(frozenset(d) for d in self.goalDisCombos)
+        
         
  
     def addNewFacts(self,newFacts):
@@ -620,6 +658,8 @@ def autoSolve(pfEnvir):
         if pfEnvir.goalAchieved:
             print("DONE!")
             pfEnvir.execCommand("display")
+            print()
+            print("DONE!")
             return
         else:
           #  print("******************************************")
@@ -880,32 +920,32 @@ def rule(facts):
 counting_contradiction = HyperTheorem(inFacts, rule, "counting_contradiction")
     
 
-thmList = [#sylowTheorem,
+thmList = [sylowTheorem,
            singleSylow_notSimple,
            simple_not_simple,
-           #alternating_order,
-           #embed_in_An,
-           #lagrange,
-           #divides_contradiction,
-           #alternating_simple,
-           #subgroup_index,
-           #coset_action,
-           #simple_group_action,
+           alternating_order,
+           embed_in_An,
+           lagrange,
+           divides_contradiction,
+           alternating_simple,
+           subgroup_index,
+           coset_action,
+           simple_group_action,
            count_order_pk_elements,
            counting_contradiction
            ]
 
-thmNames = {#"sylow":sylowTheorem,
+thmNames = {"sylow":sylowTheorem,
             "not_simple":singleSylow_notSimple,
             "simple_not_simple":simple_not_simple,
-            #"alternating_order":alternating_order,
-            #"embed_An": embed_in_An,
-            #"lagrange":lagrange,
-            #"divides_contradiction":divides_contradiction,
-            #"alternating_simple": alternating_simple,
-            #"subgroup_index": subgroup_index,
-            #"coset_action": coset_action,
-            #"simple_group_action": simple_group_action,
+            "alternating_order":alternating_order,
+            "embed_An": embed_in_An,
+            "lagrange":lagrange,
+            "divides_contradiction":divides_contradiction,
+            "alternating_simple": alternating_simple,
+            "subgroup_index": subgroup_index,
+            "coset_action": coset_action,
+            "simple_group_action": simple_group_action,
             "count_order_pk_elements": count_order_pk_elements,
             "counting_cont": counting_contradiction
             }
@@ -1094,20 +1134,26 @@ def orderCountingTest():
     
     fact1 = group('G')
     fact2 = order('G', '30')
-    fact3 = num_sylow('5', 'G', '6')
-    fact4 = OR(num_sylow('3', 'G', '10'), num_sylow('3','G', '1'))
+#    fact3 = OR(not_simple('G'), false())
+#    fact4 = OR(simple('G'), false())
     fact5 = sylow_p_subgroup('P5', '5', 'G')
     fact6 = sylow_p_subgroup('P3', '3', 'G')
     fact7 = order('P5', '5')
     fact8 = order('P3', '3')
     fact9 = simple('G')
 
-    factList = [fact1, fact2, fact3, fact4, fact5, fact6, fact7, fact8]
+    factList = [fact1, fact2, fact3, fact4, fact5, fact6, fact7, fact8,fact9]
+#    factList = [fact3,fact4]
     pfEnvir = ProofEnvironment(factList, thmList, thmNames, false())
     autoSolve(pfEnvir)
 
+    #Problem seems to occur when we have
+    #(A or B), (C or D).  A -> Goal, C -> Goal, (B,D)->Goal
+
+#def hardDisjunctionTest():
+#    def testFact(A,B):
+#        return Fact("fact", [A,B])
 
 
-
-orderCountingTest()
+autoTest2()
 #autoTest2()

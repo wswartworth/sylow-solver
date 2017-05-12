@@ -276,7 +276,7 @@ class ProofEnvironment:
             if usedDisjunctionDict[d] != i:
                 valid = False
         if not valid:
-            print("Invalid use of disjunction facts")
+            #print("Invalid use of disjunction facts")
             return False           
         
         if type(thm) is Theorem:
@@ -610,11 +610,13 @@ def match_facts_to_template(template, facts, initMatchDict = {}):
 
 def autoSolve(pfEnvir):
 
+    MAX_ITERATIONS = 30;
+
     thmMatches = {} #dict mapping theorems in the environment to lists of fact matches
     for thm in pfEnvir.theorems:
         thmMatches[thm] = match_facts_to_theorem(thm.facts, pfEnvir.facts)
 
-    while(True):
+    for i in range(0,MAX_ITERATIONS):
         #pick one of the matches according to some procedure
         #"breadth-first" approach
         #should remove things once they're already applied
@@ -645,9 +647,9 @@ def autoSolve(pfEnvir):
                 thmMatches[thm].remove(match) #prevent reapplying theorems
             
         if not encounteredMatch:
-            print("Out of facts")
-            pfEnvir.execCommand("display")
-            return
+ #           print("Out of facts")
+ #           pfEnvir.execCommand("display")
+            return False
  #       else:
  #           print("not out of facts yet")
 
@@ -656,16 +658,19 @@ def autoSolve(pfEnvir):
             thmMatches[thm] += match_facts_to_theorem(thm.facts, pfEnvir.facts, newFacts)
 
         if pfEnvir.goalAchieved:
-            print("DONE!")
-            pfEnvir.execCommand("display")
-            print()
-            print("DONE!")
-            return
+ #           print("DONE!")
+ #           pfEnvir.execCommand("display")
+ #           print()
+ #           print("DONE!")
+            return True
         else:
+            pass
           #  print("******************************************")
            # pfEnvir.execCommand("display")
             #print("******************************************")
-            print("next iteration")
+ #           print("next iteration")
+            
+    return False #surpassed max iterations
                 
                 
         
@@ -896,24 +901,17 @@ count_order_pk_elements = HyperTheorem(inFacts, rule, "count_order_pk_elements")
 #really should be varargs
 inFacts = [order_pk_lower_bound('G', 'p1', 'N1'),order_pk_lower_bound('G', 'p2', 'N2'), order('G','n')]
 def rule(facts):
-    print("COUNTING")
+    #print("COUNTING")
     conclusions = []
     p1 = int(facts[0].args[1])
     p2 = int(facts[1].args[1])
-    #p3 = int(facts[2].args[1])
     N1 = int(facts[0].args[2])
     N2 = int(facts[1].args[2])
-   # N3 = int(facts[2].args[2])
     n = int(facts[2].args[1])
-    #if p1 == p2 or p1==p3 or p2==p3: 
-      #  return [] #not actually a good approach
     if p1 == p2:
         return []
 
     if N1 + N2 + 1 > n: #too many elements
-        #print("CONTRADICTION")
-       # print("N1,N2,N3: ", N1, N2, N3)
-        #print("p1,p2,p3: ", p1, p2, p3)
         return [false()]
     else:
         return conclusions
@@ -1154,6 +1152,22 @@ def orderCountingTest():
 #    def testFact(A,B):
 #        return Fact("fact", [A,B])
 
+def findHardOrders(inFile):
 
-autoTest2()
+    global thmList
+    global thmNames
+    
+    with open(inFile) as f:
+        for n in f:
+            facts = [group('G'), simple('G'), order('G', n)]
+            pfEnvir = ProofEnvironment(facts, thmList, thmNames, false())
+            success = autoSolve(pfEnvir)
+            if success:
+                print(n, " : SUCCESS")
+            else:
+                print(n, " : FAILURE")
+
+
+findHardOrders('interesting_10000.txt')
+#autoTest2()
 #autoTest2()

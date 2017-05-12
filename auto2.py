@@ -728,6 +728,10 @@ def transitive_action(G, n):
 def order_pk_lower_bound(G, p, N):
     return Fact("order_pk_lower_bound", [G, p, N])
 
+#G has more than one sylow p subgroup
+def more_than_one_sylow(p, G):
+    return Fact("more_than_one_sylow", [p, G])
+
 
 
 def OR(f1,f2):
@@ -916,6 +920,36 @@ def rule(facts):
     else:
         return conclusions
 counting_contradiction = HyperTheorem(inFacts, rule, "counting_contradiction")
+
+## NORMALIZER OF INTERSECTION ##
+
+#more than one sylow?
+inFacts = [num_sylow('p','G','n_p')]
+def rule(facts):
+    conclusions = []
+    n_p = int(facts[0].args[2])
+    p = facts[0].args[0]
+    G = facts[0].args[1]
+    if n_p > 1:
+        conclusions = [more_than_one_sylow(p,G)]
+    return conclusions
+multiple_sylows = HyperTheorem(inFacts, rule, "multiple_sylows")
+
+#possible maximal sylow intersections
+inFacts = [more_than_one_sylow('p','G'), sylow_subgroup('P', 'p', 'G'), order('P', pk) ]
+def rule(facts):
+    p = int(facts[0].args[0])
+    pk = int(facts[2].args[1])
+    G = facts[0].args[1]
+    possible_intersection = 1
+    intersection_facts = []
+    while possible_intersection != pk:
+        intersection_facts.append(max_sylow_intersection(G, str(p), str(possible_intersection) ) )
+        possible_intersection = possible_intersection * p
+    return [Disjunction(intersection_facts)]
+possible_max_intersections = HyperTheorem(inFacts, rule, "possible_max_intersections")
+        
+    
     
 
 thmList = [sylowTheorem,

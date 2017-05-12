@@ -684,6 +684,10 @@ def group(G):
 def order(G,n):
     return Fact("order", [G, n])
 
+#the order of a sylow p-subgroup of G is pk
+def sylow_p_order(G, p, pk):
+    return Fact("sylow_order", [G,pk])
+
 #P is a sylow p-subgroup of G
 def sylow_p_subgroup(P, p, G):
     return Fact("sylow_p_subgroup", [P, p, G])
@@ -732,7 +736,17 @@ def order_pk_lower_bound(G, p, N):
 def more_than_one_sylow(p, G):
     return Fact("more_than_one_sylow", [p, G])
 
+#the intersection of A and B is C
+def intersection(A, B, C):
+    return Fact("intersection", [A,B,C])
 
+#N_G(H) = K
+def normalizer(G, H, K):
+    return Fact("normalizer", [G,H,K])
+
+#the order of H is at least n
+def order_lower_bound(H, n):
+    return Fact("order_lower_bound", [H,n])
 
 def OR(f1,f2):
     return Disjunction([f1,f2])
@@ -751,7 +765,7 @@ def rule(facts):
     groupOrder = int(facts[1].args[1])
     for p in sylow2.primeFactors(groupOrder):
         sylowOrder = p ** sylow2.max_p_divisor(groupOrder, p)
- #       conclusions.append(Fact("sylow_p_subgroup", ['?'+ str(p), str(p), groupName]))
+        conclusions.append(sylow_p_order(groupName, str(p), str(sylowOrder)))
         conclusions.append(sylow_p_subgroup('?' + str(p), str(p), groupName) )
         conclusions.append(order('?' + str(p), str(sylowOrder)) )
         n_pList = sylow2.num_sylow(p,groupOrder)
@@ -948,8 +962,34 @@ def rule(facts):
         possible_intersection = possible_intersection * p
     return [Disjunction(intersection_facts)]
 possible_max_intersections = HyperTheorem(inFacts, rule, "possible_max_intersections")
+
+#If p^k is the maximum sylow intersection, then there are two sylow p-subgroups
+#intersecting in a subgroup of size p^k
+inFacts = [max_sylow_intersection('G','p', 'p^k')]
+outFacts = [sylow_p_subgroup('?P', 'p', 'G'), sylow_p_subgroup('?Q','p', 'G'), 
+    intersection('?P', '?Q', '?R'), order('?R', 'p^k')]
+intersection_of_sylows = Theorem(inFacts, outFacts, "intersection_of_sylows")
+
+
+#normalizer of sylow intersection
+#SYLOW ORDER THING IS UGLY
+#FOR NOW, only when l = k-1 !!!!!
+inFacts = [sylow_p_subgroup('P', 'p', 'G'), sylow_p_subgroup('Q','p', 'G'), 
+    intersection('P','Q','p^l'), order('R', 'r') ,sylow_p_order('G', 'p', 'p^k')]
+def rule (facts):
+    conclusions = []
+    pl = int(facts[3].args[2])
+    pk = int(facts[4].args[2])
+    p = int(facts[0].args[1])
+    G = facts[0].args[2]
+    R = facts[3].args[0]
+    if pk == pl * p:
+        conclusions.append( normalizer(G, R, '?T') )
+        conclusions.append( order_lower_bound('?T', ) )
+
+
         
-    
+
     
 
 thmList = [sylowTheorem,

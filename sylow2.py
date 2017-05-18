@@ -58,17 +58,22 @@ def primeFactorization(n):
 #    return [a[0] for a in factorization]
  
 def divisors(n):
-        factorization = primeFactorization(n)
-        divisors = [1]
-        for entry in factorization:
-            p = entry[0]
-            k = entry[1]
-            new_divisors = []
-            for d in divisors:
-                for i in range(1,k+1):
-                    new_divisors.append( d * (p ** i) )
-            divisors = divisors + new_divisors
-        return divisors
+        #factorization = primeFactorization(n)
+        #divisors = [1]
+        #for entry in factorization:
+        #    p = entry[0]
+        #    k = entry[1]
+        #    new_divisors = []
+        #    for d in divisors:
+        #        for i in range(1,k+1):
+        #            new_divisors.append( d * (p ** i) )
+        #    divisors = divisors + new_divisors
+        #return divisors
+        divs = []
+        for i in range(1,n+1):
+            if n % i == 0:
+                divs.append(i)
+        return divs
                  
              
  
@@ -93,7 +98,8 @@ def primeFactors(n):
                                 factors.append(i)
         return factors
                                  
- 
+
+#print(divisors(12))
 #print out the "interesting" group orders
  
 #upper = int(input("interesting orders up to... : "))

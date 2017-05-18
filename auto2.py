@@ -258,7 +258,19 @@ class ProofEnvironment:
      
         conclusions = []
         for conc in thm.conclusions:
-            newFactArgs = [ matching[x] for x in conc.args ]
+
+            #print("---- new conc -----")
+            #conc.doPrint()
+            #print("----- end new conc ----")
+
+            #newFactArgs = [ matching[x] for x in conc.args ]
+            newFactArgs = []
+            for x in conc.args:
+                if x[0] != '?':
+                    newFactArgs.append(matching[x])
+                else:
+                    newFactArgs.append(x)
+
             newFact = Fact(conc.name, newFactArgs)
             conclusions.append(newFact)
  
@@ -339,6 +351,11 @@ class ProofEnvironment:
                         #print("newSymbol: ", newSymbol)
                         symDict[sym] = newSymbol
                     args[i] = symDict[sym]
+
+        #print("--------------Testing------------")
+        #for fact in simpleFactList:
+        #    fact.doPrint()
+        #print("--------------Done Testing -------")
 
     #produce a new symbol
     #a symbol is a string consisting of an uppercase letter followed by a sequence of digits
@@ -644,14 +661,17 @@ def autoSolve(pfEnvir):
                 if factsFromTheorem: #sometimes the theorem match might be invalid. FIX?
                                     #FIX move encounteredMatch here
                     newFacts += factsFromTheorem
+
+                    #print("----- new facts -----")
+                    #for fact in factsFromTheorem:
+                    #    fact.doPrint()
+                    #print("---------------------")
+
+
                 thmMatches[thm].remove(match) #prevent reapplying theorems
             
         if not encounteredMatch:
- #           print("Out of facts")
- #           pfEnvir.execCommand("display")
-            return False
- #       else:
- #           print("not out of facts yet")
+            break #failed
 
 
         for thm in pfEnvir.theorems:
@@ -659,9 +679,8 @@ def autoSolve(pfEnvir):
 
         if pfEnvir.goalAchieved:
  #           print("DONE!")
- #           pfEnvir.execCommand("display")
- #           print()
- #           print("DONE!")
+            pfEnvir.execCommand("display")
+            print("SUCCESS")
             return True
         else:
             pass
@@ -670,6 +689,8 @@ def autoSolve(pfEnvir):
             #print("******************************************")
  #           print("next iteration")
             
+    pfEnvir.execCommand("display")
+    print("FAILURE")
     return False #surpassed max iterations
                 
                 
@@ -686,7 +707,7 @@ def order(G,n):
 
 #the order of a sylow p-subgroup of G is pk
 def sylow_p_order(G, p, pk):
-    return Fact("sylow_order", [G,pk])
+    return Fact("sylow_order", [G,p,pk])
 
 #P is a sylow p-subgroup of G
 def sylow_p_subgroup(P, p, G):
@@ -747,6 +768,19 @@ def normalizer(G, H, K):
 #the order of H is at least n
 def order_lower_bound(H, n):
     return Fact("order_lower_bound", [H,n])
+
+#the maximum intersection of two distinct sylow p-subgroups of G is m
+def max_sylow_intersection(G, p, m):
+    return Fact("max_sylow_intersection", [G,p,m])
+
+#H is a proper subgroup of G
+#for us, a proper subgroup is neither trivial, nor all of G
+def proper_subgroup(H, G):
+    return Fact("proper_subgroup", [H,G])
+
+#H is a normal subgroup of G
+def normal(H, G):
+    return Fact("normal", [H,G])
 
 def OR(f1,f2):
     return Disjunction([f1,f2])
@@ -935,7 +969,7 @@ def rule(facts):
         return conclusions
 counting_contradiction = HyperTheorem(inFacts, rule, "counting_contradiction")
 
-## NORMALIZER OF INTERSECTION ##
+########################### NORMALIZER OF INTERSECTION #########################
 
 #more than one sylow?
 inFacts = [num_sylow('p','G','n_p')]
@@ -950,7 +984,7 @@ def rule(facts):
 multiple_sylows = HyperTheorem(inFacts, rule, "multiple_sylows")
 
 #possible maximal sylow intersections
-inFacts = [more_than_one_sylow('p','G'), sylow_subgroup('P', 'p', 'G'), order('P', pk) ]
+inFacts = [more_than_one_sylow('p','G'), sylow_p_subgroup('P', 'p', 'G'), order('P', 'pk') ]
 def rule(facts):
     p = int(facts[0].args[0])
     pk = int(facts[2].args[1])
@@ -975,19 +1009,27 @@ intersection_of_sylows = Theorem(inFacts, outFacts, "intersection_of_sylows")
 #SYLOW ORDER THING IS UGLY
 #FOR NOW, only when l = k-1 !!!!!
 inFacts = [sylow_p_subgroup('P', 'p', 'G'), sylow_p_subgroup('Q','p', 'G'), 
-    intersection('P','Q','p^l'), order('R', 'r') ,sylow_p_order('G', 'p', 'p^k')]
+    intersection('P','Q','R'), order('R', 'p^l') ,sylow_p_order('G', 'p', 'p^k'), order('G','n')]
 def rule (facts):
     conclusions = []
-    pl = int(facts[3].args[2])
+    pl = int(facts[3].args[1])
     pk = int(facts[4].args[2])
     p = int(facts[0].args[1])
+    n = int(facts[5].args[1])
     G = facts[0].args[2]
     R = facts[3].args[0]
     if pk == pl * p:
         conclusions.append( normalizer(G, R, '?T') )
-        conclusions.append( order_lower_bound('?T', ) )
 
+        possible_order_facts = []
+        for d in sylow2.divisors(n):
+            if (d % pk == 0) and (d > pk):
+                possible_order_facts.append(order('?T', str(d)))
+        conclusions.append(Disjunction(possible_order_facts))
+    return conclusions
+normalizer_sylow_intersection = HyperTheorem(inFacts, rule, "normalizer_sylow_intersection")
 
+#NEXT STEP: if the normalizer of intersection is all of G, we're done
         
 
     
@@ -1004,7 +1046,11 @@ thmList = [sylowTheorem,
            coset_action,
            simple_group_action,
            count_order_pk_elements,
-           counting_contradiction
+           counting_contradiction,
+           multiple_sylows,
+           possible_max_intersections,
+           intersection_of_sylows,
+           normalizer_sylow_intersection
            ]
 
 thmNames = {"sylow":sylowTheorem,
@@ -1019,7 +1065,11 @@ thmNames = {"sylow":sylowTheorem,
             "coset_action": coset_action,
             "simple_group_action": simple_group_action,
             "count_order_pk_elements": count_order_pk_elements,
-            "counting_cont": counting_contradiction
+            "counting_cont": counting_contradiction,
+            "multiple_sylows": multiple_sylows,
+            "possible_max_intersections": possible_max_intersections,
+            "intersection_of_sylows": intersection_of_sylows,
+            "normalizer_sylow_intersection": normalizer_sylow_intersection
             }
 
 
@@ -1242,6 +1292,6 @@ def findHardOrders(inFile):
                 print(n, " : FAILURE")
 
 
-findHardOrders('interesting_10000.txt')
+#findHardOrders('interesting_10000.txt')
 #autoTest2()
-#autoTest2()
+autoTest2()

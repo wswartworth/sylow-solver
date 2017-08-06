@@ -986,17 +986,17 @@ def rule(facts):
 multiple_sylows = HyperTheorem(inFacts, rule, "multiple_sylows")
 
 #possible maximal sylow intersections
-inFacts = [more_than_one_sylow('p','G'), sylow_p_subgroup('P', 'p', 'G'), order('P', 'pk') ]
+inFacts = [more_than_one_sylow('p','G'), sylow_p_order('G', 'p', 'pk')]
 def rule(facts):
     p = int(facts[0].args[0])
-    pk = int(facts[2].args[1])
+    pk = int(facts[1].args[2])
     G = facts[0].args[1]
     possible_intersection = 1
     intersection_facts = []
     while possible_intersection != pk:
         intersection_facts.append(max_sylow_intersection(G, str(p), str(possible_intersection) ) )
         possible_intersection = possible_intersection * p
-    print("YEE")
+   # print("YEE")
     return [Disjunction(intersection_facts)]
 possible_max_intersections = HyperTheorem(inFacts, rule, "possible_max_intersections")
 
@@ -1059,6 +1059,22 @@ normal_subgroup_to_not_simple = HyperTheorem(inFacts, rule ,"normal_subgroup_to_
 #multi_sylow_single_sylow_cont = Theorem(inFacts, outFacts, "multi_sylow_single_sylow_cont")
 
 
+#narrow down the possible max intersections
+inFacts = [num_sylow('p','G', 'np'), max_sylow_intersection('G', 'p', 'p^l'), sylow_p_order('G', 'p', 'p^k')]
+def rule(facts):
+    conclusions = []
+    p = int(facts[0].args[0])
+    np = int(facts[0].args[2])
+    pl = int(facts[1].args[2])
+    pk = int(facts[2].args[2])
+    #n_p cong 1 mod p^k/p^l
+    if(np % (pk//pl) != 1):
+        conclusions.append(false())
+    return conclusions
+rule_out_max_intersections = HyperTheorem(inFacts, rule, "rule_out_max_intersections")
+    
+
+
 inFacts = [order('G', 'n')]
 outFacts = [false()]
 def rule(facts):
@@ -1084,12 +1100,14 @@ thmList = [sylowTheorem,
            count_order_pk_elements,
            counting_contradiction,
            multiple_sylows,
-#           possible_max_intersections,
+           possible_max_intersections,
            intersection_of_sylows,
            normalizer_sylow_intersection,
            normalizer_everything_implies_normal,
            normal_subgroup_to_not_simple,
  #          multi_sylow_single_sylow_cont
+
+           rule_out_max_intersections,
            
            eighteen_bad #REMOVE TEST!!!!!!!!!!!!!
            ]
@@ -1108,11 +1126,12 @@ thmNames = {"sylow":sylowTheorem,
             "count_order_pk_elements": count_order_pk_elements,
             "counting_cont": counting_contradiction,
             "multiple_sylows": multiple_sylows,
- #           "possible_max_intersections": possible_max_intersections,
+            "possible_max_intersections": possible_max_intersections,
             "intersection_of_sylows": intersection_of_sylows,
             "normalizer_sylow_intersection": normalizer_sylow_intersection,
             "normalizer_everything_implies_normal" : normalizer_everything_implies_normal,
             "normal_subgroup_to_not_simple" : normal_subgroup_to_not_simple,
+            "rule_out_max_intersections" : rule_out_max_intersections,
             
             "eighteen_bad" : eighteen_bad #REMOVE
  #           "multi_sylow_single_sylow_cont" : multi_sylow_single_sylow_cont
@@ -1230,9 +1249,9 @@ def autoTest2():
         fact2 = Fact("order", ['G',order])
         fact3 = Fact("simple", ['G'])
 
-        test = max_sylow_intersection('G','3','3')
+   #     test = max_sylow_intersection('G','3','3')
  
-        facts = [fact1, fact2, fact3, test]
+        facts = [fact1, fact2, fact3]
         goal = Fact("false", [])
  
         pfEnvir = ProofEnvironment(facts,thmList,thmNames, goal)

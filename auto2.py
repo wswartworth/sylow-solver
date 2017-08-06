@@ -634,6 +634,8 @@ def autoSolve(pfEnvir):
         thmMatches[thm] = match_facts_to_theorem(thm.facts, pfEnvir.facts)
 
     for i in range(0,MAX_ITERATIONS):
+
+        print("iteration: ", i)
         #pick one of the matches according to some procedure
         #"breadth-first" approach
         #should remove things once they're already applied
@@ -994,6 +996,7 @@ def rule(facts):
     while possible_intersection != pk:
         intersection_facts.append(max_sylow_intersection(G, str(p), str(possible_intersection) ) )
         possible_intersection = possible_intersection * p
+    print("YEE")
     return [Disjunction(intersection_facts)]
 possible_max_intersections = HyperTheorem(inFacts, rule, "possible_max_intersections")
 
@@ -1020,19 +1023,52 @@ def rule (facts):
     R = facts[3].args[0]
     if pk == pl * p:
         conclusions.append( normalizer(G, R, '?T') )
+        conclusions.append( subgroup('?T', G)) #IS THIS REALLY THE RIGHT PLACE?
+        #conclusions.append( group('?T') ) #not really the right place -- subgroups should always be groups. This potentailly slows things down a lot!!
+        conclusions.append( more_than_one_sylow('p', '?T')) #normalizer must contain at least two sylow subgroups
 
         possible_order_facts = []
         for d in sylow2.divisors(n):
             if (d % pk == 0) and (d > pk):
                 possible_order_facts.append(order('?T', str(d)))
         conclusions.append(Disjunction(possible_order_facts))
+
     return conclusions
 normalizer_sylow_intersection = HyperTheorem(inFacts, rule, "normalizer_sylow_intersection")
 
-#NEXT STEP: if the normalizer of intersection is all of G, we're done
-        
+#if the normalizer of intersection is all of G, we're done
+#could break this up, and not worry about group orders
+inFacts = [normalizer('G','H','X'), order('G','n'), order('X','n')]
+outFacts = [normal('H','G')]
+normalizer_everything_implies_normal = Theorem(inFacts,outFacts, "normalizer_everything_implies_normal")
 
+inFacts = [normal('H','G'), order('H','h'), order('G','g')]
+def rule(facts):
+    conclusions = []
+    h = int(facts[1].args[1])
+    g = int(facts[2].args[1])
+    G = facts[0].args[1]
+    H = facts[0].args[0]
+    if h < g :
+        conclusions.append(not_simple(G))
+    return conclusions
+normal_subgroup_to_not_simple = HyperTheorem(inFacts, rule ,"normal_subgroup_to_not_simple")
+
+#inFacts = [num_sylow('p', 'G', '*1'), more_than_one_sylow('p','G')]
+#outFacts = [false()]
+#multi_sylow_single_sylow_cont = Theorem(inFacts, outFacts, "multi_sylow_single_sylow_cont")
+
+
+inFacts = [order('G', 'n')]
+outFacts = [false()]
+def rule(facts):
+    conclusions = []
+    n = int(facts[0].args[1])
+    if(n == 18):
+        conclusions = [false()]
+    return conclusions
     
+eighteen_bad = HyperTheorem(inFacts, rule, "eighteen_bad")
 
 thmList = [sylowTheorem,
            singleSylow_notSimple,
@@ -1048,9 +1084,14 @@ thmList = [sylowTheorem,
            count_order_pk_elements,
            counting_contradiction,
            multiple_sylows,
-           possible_max_intersections,
+#           possible_max_intersections,
            intersection_of_sylows,
-           normalizer_sylow_intersection
+           normalizer_sylow_intersection,
+           normalizer_everything_implies_normal,
+           normal_subgroup_to_not_simple,
+ #          multi_sylow_single_sylow_cont
+           
+           eighteen_bad #REMOVE TEST!!!!!!!!!!!!!
            ]
 
 thmNames = {"sylow":sylowTheorem,
@@ -1067,9 +1108,14 @@ thmNames = {"sylow":sylowTheorem,
             "count_order_pk_elements": count_order_pk_elements,
             "counting_cont": counting_contradiction,
             "multiple_sylows": multiple_sylows,
-            "possible_max_intersections": possible_max_intersections,
+ #           "possible_max_intersections": possible_max_intersections,
             "intersection_of_sylows": intersection_of_sylows,
-            "normalizer_sylow_intersection": normalizer_sylow_intersection
+            "normalizer_sylow_intersection": normalizer_sylow_intersection,
+            "normalizer_everything_implies_normal" : normalizer_everything_implies_normal,
+            "normal_subgroup_to_not_simple" : normal_subgroup_to_not_simple,
+            
+            "eighteen_bad" : eighteen_bad #REMOVE
+ #           "multi_sylow_single_sylow_cont" : multi_sylow_single_sylow_cont
             }
 
 
@@ -1171,6 +1217,9 @@ def autoTest():
 
     autoSolve(pfEnvir)
 
+
+# There are two pieces of test code currently in play: 'test' in the list of facts, as well as a dummy order 18 is bad theorem
+# remove them one at a time, and be done
 def autoTest2():
     global thmList
     global thmNames
@@ -1180,8 +1229,10 @@ def autoTest2():
         fact1 = Fact("group", ['G'])
         fact2 = Fact("order", ['G',order])
         fact3 = Fact("simple", ['G'])
+
+        test = max_sylow_intersection('G','3','3')
  
-        facts = [fact1, fact2, fact3]
+        facts = [fact1, fact2, fact3, test]
         goal = Fact("false", [])
  
         pfEnvir = ProofEnvironment(facts,thmList,thmNames, goal)
@@ -1292,6 +1343,22 @@ def findHardOrders(inFile):
                 print(n, " : FAILURE")
 
 
+#def normalizer_test():
+#    global thmList
+#    global thmNames
+#
+#    theoremNames = copy.copy(thmNames)
+
+#    inFacts = [order('G','*18')]
+#    outFacts = [false()]
+   # eighteen_bad = new Theorem()
+#    theoremNames.append()
+#    pfEnvir = ProofEnvironment(facts,theorems,theoremNames, goal)
+#    autoSolve(pfEnvir)
+    
+
+
 #findHardOrders('interesting_10000.txt')
 #autoTest2()
+
 autoTest2()

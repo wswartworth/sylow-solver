@@ -784,6 +784,11 @@ def proper_subgroup(H, G):
 def normal(H, G):
     return Fact("normal", [H,G])
 
+#T is the normalizer of intersection for two sylow-p subgroups of G
+def normalizer_of_sylow_intersection(p, G, T) :
+    return Fact("normalizer_of_sylow_intersection", [p, G, T])
+    
+
 def OR(f1,f2):
     return Disjunction([f1,f2])
     
@@ -996,7 +1001,7 @@ def rule(facts):
     while possible_intersection != pk:
         intersection_facts.append(max_sylow_intersection(G, str(p), str(possible_intersection) ) )
         possible_intersection = possible_intersection * p
-   # print("YEE")
+    print("YEE")
     return [Disjunction(intersection_facts)]
 possible_max_intersections = HyperTheorem(inFacts, rule, "possible_max_intersections")
 
@@ -1025,12 +1030,14 @@ def rule (facts):
         conclusions.append( normalizer(G, R, '?T') )
         conclusions.append( subgroup('?T', G)) #IS THIS REALLY THE RIGHT PLACE?
         #conclusions.append( group('?T') ) #not really the right place -- subgroups should always be groups. This potentailly slows things down a lot!!
-        conclusions.append( more_than_one_sylow('p', '?T')) #normalizer must contain at least two sylow subgroups
+        conclusions.append( normalizer_of_sylow_intersection(str(p), G, '?T') )
+ #       conclusions.append( more_than_one_sylow('p', '?T')) #normalizer must contain at least two sylow subgroups
 
         possible_order_facts = []
         for d in sylow2.divisors(n):
             if (d % pk == 0) and (d > pk):
-                possible_order_facts.append(order('?T', str(d)))
+                 possible_order_facts.append(order('?T', str(d)))
+                 
         conclusions.append(Disjunction(possible_order_facts))
 
     return conclusions
@@ -1049,7 +1056,7 @@ def rule(facts):
     g = int(facts[2].args[1])
     G = facts[0].args[1]
     H = facts[0].args[0]
-    if h < g :
+    if 1 < h and h < g :
         conclusions.append(not_simple(G))
     return conclusions
 normal_subgroup_to_not_simple = HyperTheorem(inFacts, rule ,"normal_subgroup_to_not_simple")
@@ -1072,19 +1079,31 @@ def rule(facts):
         conclusions.append(false())
     return conclusions
 rule_out_max_intersections = HyperTheorem(inFacts, rule, "rule_out_max_intersections")
-    
 
-
-inFacts = [order('G', 'n')]
-outFacts = [false()]
+inFacts = [normalizer_of_sylow_intersection('p', 'G', 'T'), order('T', 'k')]
 def rule(facts):
     conclusions = []
-    n = int(facts[0].args[1])
-    if(n == 18):
-        conclusions = [false()]
+    p = int(facts[0].args[0])
+    T = facts[0].args[2]
+    k = int(facts[1].args[1])
+
+    n_pList = sylow2.num_sylow(p,k)
+    if len(n_pList) == 1: #sylow p-subgroup of T forced to be normal
+        conclusions.append(false())
+        print('p: ', p, ' :: k: ', k)
     return conclusions
+rule_out_normalizer_of_intersection_order = HyperTheorem(inFacts, rule, "rule_out_normalizer_of_intersection_order")
     
-eighteen_bad = HyperTheorem(inFacts, rule, "eighteen_bad")
+#inFacts = [order('G', 'n')]
+#outFacts = [false()]
+#def rule(facts):
+#    conclusions = []
+ #   n = int(facts[0].args[1])
+ #   if(n == 18):
+ #       conclusions = [false()]
+ #   return conclusions
+#    
+#eighteen_bad = HyperTheorem(inFacts, rule, "eighteen_bad")
 
 thmList = [sylowTheorem,
            singleSylow_notSimple,
@@ -1105,11 +1124,13 @@ thmList = [sylowTheorem,
            normalizer_sylow_intersection,
            normalizer_everything_implies_normal,
            normal_subgroup_to_not_simple,
- #          multi_sylow_single_sylow_cont
+ #          multi_sylow_single_sylow_cont,
 
            rule_out_max_intersections,
+
+           rule_out_normalizer_of_intersection_order
            
-           eighteen_bad #REMOVE TEST!!!!!!!!!!!!!
+ #          eighteen_bad #REMOVE TEST!!!!!!!!!!!!!
            ]
 
 thmNames = {"sylow":sylowTheorem,
@@ -1132,8 +1153,10 @@ thmNames = {"sylow":sylowTheorem,
             "normalizer_everything_implies_normal" : normalizer_everything_implies_normal,
             "normal_subgroup_to_not_simple" : normal_subgroup_to_not_simple,
             "rule_out_max_intersections" : rule_out_max_intersections,
+
+            "rule_out_normalizer_of_intersection_order" : rule_out_normalizer_of_intersection_order
             
-            "eighteen_bad" : eighteen_bad #REMOVE
+ #           "eighteen_bad" : eighteen_bad #REMOVE
  #           "multi_sylow_single_sylow_cont" : multi_sylow_single_sylow_cont
             }
 

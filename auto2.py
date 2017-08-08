@@ -7,15 +7,28 @@ class Fact:
         self.name = name
         self.args = args
         self.dependencies = dependencies #the facts needed to conclude this fact, list of fact labels
+
+        self.useful = False #was this fact used to conclude the goal
         
         self.disAncestors = set() #set of disjunction facts needed to conclude this fact (anywhere in ancestry)
                                   #each entry is of the form (DisjunctionLabel, disjunctionIndex)
         
         self.concThm = None #the theorem that was used to conclude this Fact
         self.label = label
+
  
     def doPrint(self):
         print(self.label, " : ", self.name, " ", self.args, " :: ", self.dependencies, " :: " , self.disAncestors)
+
+    def doNicePrint(self):
+        print(self.label, " : ", self.name, " ", self.args)
+        if(self.concThm != None):
+            print("    by thm ", self.concThm.name, " applied to facts ", *self.dependencies)
+        else:
+            print("    by hypothesis")
+        if self.disAncestors != set():
+            print("    Disjunctions in history: ", *self.disAncestors)
+        print()
  
     def equals(self,fact):
         if self.name != fact.name: return False
@@ -42,6 +55,9 @@ class Disjunction:
         self.dependencies = dependencies
         self.disAncestors = set()
         self.label = label
+
+        self.useful = False
+
     
     def doPrint(self):
         facts = self.facts
@@ -50,6 +66,21 @@ class Disjunction:
             facts[i].doPrint()
             if(i != len(facts) - 1):
                 print("    OR")
+
+    def doNicePrint(self):
+        facts = self.facts
+        print(self.label, ":")
+        for i in range(0,len(facts)):
+            facts[i].doPrint()
+            if(i != len(facts) - 1):
+                print("    OR")
+        if(self.concThm != None):
+            print("    by thm ", self.concThm.name, " applied to facts ", *self.dependencies)
+        else:
+            print("    by hypothesis")
+        if self.disAncestors != set():
+            print("    Disjunctions in history: ", *self.disAncestors)
+        print()
          
  
 #theorem specified by:
@@ -64,7 +95,6 @@ class Disjunction:
  
 class Theorem:
  
-    #a theorem should 
     def __init__(self, facts, conclusions, name):
         self.facts = facts
         self.conclusions = conclusions
@@ -87,6 +117,9 @@ class ProofEnvironment:
     #theorem_names_dict is a dictionary of theorem names
     #goal is the fact to be proven
     def __init__(self, facts, theorems, theorem_name_dict, goal):
+
+        self.orderedFactList = [] #list of facts labels in the order that they appear
+        
         self.facts = []
         self.theorems = theorems
         self.theorem_name_dict = theorem_name_dict
@@ -97,8 +130,6 @@ class ProofEnvironment:
         self.goalDisCombos = []
  #       self.goalLabel = None
  
- #       self.caseDepth = 0
- 
         #factLabels maps labels to facts
         #makes it easier to refer to a specific fact
         self.factLabels = {}
@@ -107,9 +138,9 @@ class ProofEnvironment:
         #the set of additional assumptions describing the current state of the environment
         #a new assumption is added whenever case is called
 
- 
         self.addNewFacts(facts)
         self.symbolSet = set() #the set of all symbols currently in the environment
+
 
 
         #TEST TEST
@@ -185,6 +216,16 @@ class ProofEnvironment:
 #        S = list(itertools.product(*X))
 #        S = set(frozenset(u) for u in S) #set of all tuples of disjunctions that need to be checked
 #        frozenDisCombos = set(frozenset(d) for d in self.goalDisCombos)
+
+
+    #mark a given fact, and all of its ancestors as useful
+    def updateUseful(self, fact):
+        if fact.useful:
+            return #already marked
+        fact.useful = True
+        for pred_lbl in fact.dependencies:
+            self.updateUseful(self.factLabels[pred_lbl])
+        
         
         
  
@@ -205,6 +246,8 @@ class ProofEnvironment:
                     self.updateGoalAchieved(fact)
                     #self.goalLabel = fact.label
                     #UPDATE WIN CONDITION
+
+                    self.updateUseful(fact)
                  
             if type(fact) == Disjunction:
  #               newLabel = 'D'+str(self.curFactNum)
@@ -219,7 +262,9 @@ class ProofEnvironment:
                     subFact.disAncestors = set(fact.disAncestors)
                     subFact.disAncestors.add( (fact.label, i) )
                     
-                self.addNewFacts(fact.facts)               
+                self.addNewFacts(fact.facts)
+
+            self.orderedFactList.append(newLabel) #add the new label
                  
    #         self.curFactNum += 1
  
@@ -394,7 +439,11 @@ class ProofEnvironment:
 #    def advanceCases(self):
         
         
-        
+    def printRelevantFacts(self):
+        for fact_lbl in self.orderedFactList:
+            fact = self.factLabels[fact_lbl]
+            if fact.useful:
+                fact.doNicePrint()
 
 
  
@@ -681,7 +730,7 @@ def autoSolve(pfEnvir):
 
         if pfEnvir.goalAchieved:
  #           print("DONE!")
-            pfEnvir.execCommand("display")
+            pfEnvir.printRelevantFacts()
             print("SUCCESS")
             return True
         else:
@@ -691,7 +740,7 @@ def autoSolve(pfEnvir):
             #print("******************************************")
  #           print("next iteration")
             
-    pfEnvir.execCommand("display")
+    pfEnvir.printRelevantFacts()
     print("FAILURE")
     return False #surpassed max iterations
                 
@@ -1001,7 +1050,6 @@ def rule(facts):
     while possible_intersection != pk:
         intersection_facts.append(max_sylow_intersection(G, str(p), str(possible_intersection) ) )
         possible_intersection = possible_intersection * p
-    print("YEE")
     return [Disjunction(intersection_facts)]
 possible_max_intersections = HyperTheorem(inFacts, rule, "possible_max_intersections")
 
@@ -1028,7 +1076,7 @@ def rule (facts):
     R = facts[3].args[0]
     if pk == pl * p:
         conclusions.append( normalizer(G, R, '?T') )
-        conclusions.append( subgroup('?T', G)) #IS THIS REALLY THE RIGHT PLACE?
+        conclusions.append( subgroup('?T', G))
         #conclusions.append( group('?T') ) #not really the right place -- subgroups should always be groups. This potentailly slows things down a lot!!
         conclusions.append( normalizer_of_sylow_intersection(str(p), G, '?T') )
  #       conclusions.append( more_than_one_sylow('p', '?T')) #normalizer must contain at least two sylow subgroups
@@ -1401,6 +1449,6 @@ def findHardOrders(inFile):
 
 
 #findHardOrders('interesting_10000.txt')
-#autoTest2()
-
 autoTest2()
+
+#autoTest2()

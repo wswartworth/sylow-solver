@@ -1,0 +1,165 @@
+\documentclass[11pt, oneside]{article}   	% use "amsart" instead of "article" for AMSLaTeX format
+\usepackage{geometry}                		% See geometry.pdf to learn the layout options. There are lots.
+\geometry{letterpaper}                   		% ... or a4paper or a5paper or ... 
+%\geometry{landscape}                		% Activate for rotated page geometry
+%\usepackage[parfill]{parskip}    		% Activate to begin paragraphs with an empty line rather than an indent
+\usepackage{graphicx}				% Use pdf, png, jpg, or eps§ with pdflatex; use eps in DVI mode
+								% TeX will automatically convert eps --> pdf in pdflatex		
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{amsmath}
+
+%SetFonts
+
+%SetFonts
+\newtheorem{theorem}{Theorem}
+
+\title{Automating Sylow's Theorems}
+\author{William Swartworth}
+%\date{}							% Activate to display a given date or no date
+
+\begin{document}
+\maketitle
+
+\section{Techniques}
+
+We illustrate a list of techniques, which are useful in proving that there are no simple groups of a given order.  In each section we will present a technique, and then illustrate a typical use of the technique within the context of an example.
+
+\subsection{Directly Applying Sylow}
+
+We start by recalling the following variant of Sylow's theorem.
+
+\begin{theorem}
+Let $G$ be a finite group.  And for a prime $p$, let $n_p$ denote the number of Sylow $p$-subgroups of $G$. Then
+\begin{enumerate}
+\item $n_p \equiv 1 \pmod p$
+\item $n_p$ divides $|G|$
+\item If $n_p = 1$ then the unique Sylow-$p$ subgroup is normal in $G$ 
+\end{enumerate}
+\end{theorem}
+
+Since this result is critical in all of our applications of Sylow results, we will briefly recall the proofs of these statments.
+
+\begin{proof}
+%Each of these statements follow from the transitivity of $G$'s action on its Sylow $p$-subgroups.
+Since $G$'s conjugation action on the set of Sylow $p$-subgroups is transitive, the second bullet point follows directly from the Orbit-Stabilizer Theorem.
+
+If $n_p = 1$ then the Sylow $p$-subgroup is characteristic, since it may be described as the unique subgroup of maximal prime-power order.  Hence the unique Sylow $p$-subgroup is normal.
+
+To prove the first bullet point we fix a Sylow $p$-subgroup $P$, and consider the conjugation action of $P$ on the remaining Sylow $p$-subgroups.  The key observation is that this action has no fixed points.  Suppose that 
+$P$ fixes a Sylow $p$-subgroup $Q \neq P.$  Then $\langle P, Q \rangle$ contains both $P$ and $Q$ as Sylow $p$-subgroups.  If $P$ fixes $Q$ under conjugation, then $\langle P, Q \rangle$ must also fixe $Q$ under conjugation.  But then $Q$ is normal in $\langle P, Q \rangle$, which contradicts the third bullet.
+Now by the Orbit-Stabilizer theorem, $P$'s conjugation action on the remaining $n_p - 1$ Sylow $p$-subgroups breaks up into orbits, each of size a power of a $p$.  Hence $n_p \equiv 1 \pmod p.$
+\end{proof}
+
+We now illustrate the use of this technique on a simple example.
+
+\begin{theorem}
+There are no simple groups of order $40.$
+\end{theorem}
+
+\begin{proof}
+If $G$ is a group of order $40$, then by Theorem ?? then $n_5$ must divide $40$, and be congruent to $1$ mod $5$.  This immediately forces $n_5 = 1$, from which we conclude that the unique Sylow $5$-subgroup of $G$ is normal.  Hence $G$ is not simple.
+\end{proof}
+
+For many group orders, applying Sylow's theorems is just this straightforward.
+
+%OPEN QUESTION REMARK?
+
+\subsection{Embedding into $S_n$}
+
+Let $G$ be a simple group which acts nontrivially on a set $T$ of size $n.$  If we identify $T$ with the alphabet $1,2,\ldots n$ then this action naturally gives rise to a map $\phi: G \rightarrow S_n.$  Since $G$ is simple, $\phi$ must be either injective or trivial, but the latter is ruled out since $G$'s action on $T$ was assumed to be nontrivial.  So $G$ must embed into $S_n$.  In fact simplicity of $G$ forces $G$ to embed in $A_n$.  To see this, consider the sequence of maps $G\rightarrow S_n \rightarrow \mathbb{Z}/2$, where the second arrow corresponds to the quotient of $S_n$ by $A_n.$  Unless $G$ 
+
+We may apply the above line of reasoning either to $G$'s action on its Sylow $p$-subgroups, or to $G$'s action on the cosets of a particular subgroup.  We conclude the following two rules.
+\begin{theorem}
+Suppose that $G$ is a simple group.
+\begin{itemize}
+\item If $n_p$ is the number of Sylow $p$-subgroups of $G$, then $G$ is isomorphic to a subgroup of $A_{n_p}.$
+\item If $G$ has a subgroup of index $n$, then $G$ is isomorphic to a subgroup of $A_n$
+\end{itemize}
+\end{theorem}
+
+%example
+\begin{theorem}
+There are no simple groups of order $24$.
+\end{theorem}
+\begin{proof}
+Suppose that $G$ is a simple group of order $24$.  By Sylow's theorems, the number of Sylow $3$-subgroups of $G$ is either $1$ or $4$.  If there is only one Sylow $3$-subgroup, then it is normal in $G$, and hence $G$ is not simple.  Otherwise $G$ has exactly $4$ Sylow $3$-subgroups, and so $G$ is isomorphic to subgroup of $A_4$.  Therefore $|G|$ divides $|A_4| = 4!/2 = 12$ which is an immediate contradiction.
+\end{proof}
+
+We may enhance the utility of this trick slightly by recalling that $A_n$ is simple as long as $n\geq 5.$  We illustrate this with another example.
+
+\begin{theorem}
+There are no simple groups of order $90$.
+\end{theorem}
+
+\begin{proof}
+Suppose that $G$ is a simple group of order $90$.  By Sylow's theorems, the number of Sylow $5$-subgroups of $G$ must be $6$.  Hence $G$ embeds into $A_6$.  Since the order of $A_6$ is $6!/2 = 360,$ this implies that $G$ has index $4$ in $A_6.$  Applying the same trick again, we see that $A_6$ embeds into $A_4,$ which is a contradiction since $\# A_6 \nmid \# A_4.$
+\end{proof}
+
+\subsection{Counting}
+
+In some cases it is possible to show that a simple group of order $n$ must have more than $n$ elements, yielding an immediate contradiction.  To apply this trick, one first shows that any two Sylow $p$-subgroups have small intersection.  If there are a large number of Sylow $p$-subgroups then, the elements of order $p$ cover a large number of group elements, sometimes taking up enough space that the other Sylow subgroups cannot fit.  This trick is most easily applied when the Sylow $p$-subgroups are cyclic of prime order; in that case each pair of Sylow $p$-subgroups is guaranteed to overlap in only a single element.
+
+The smallest group order for which a counting argument is natural is $30.$  We illustrate the argument below.
+\begin{theorem}
+There are no simple groups of order $30$.
+\end{theorem}
+
+\begin{proof}
+Suppose that $G$ is simple of order $30$.  By Sylow's theorems $G$ must have exactly $6$ Sylow $5$-subgroups.  Since the Sylow $5$-subgroups are cyclic of prime order, each pair intersects in exactly one element.  Therefore $G$ has $(5-1) \cdot 5 = 21$ elements of order $5$.  However $G$ must also have exactly $10$ Sylow $3$-subgroup, each of which is also cyclic of prime order.  So $G$ must have at least $(3-1)\cdot 10 = 20$ elements of order $3$.  Since $21 + 20$ is greater than the order of $G$, we conclude that $G$ cannot be simple.  
+\end{proof}
+
+
+\subsection{Normalizers of Sylow Intersection}
+
+The tricks discussed so far are sufficient to deal with all the non-simple orders up to $100.$  %ACTUAL NUMBER? TABLE of group orders/tricks
+Unfortunately, these tricks quickly begin to break down for much larger orders.  Pushing forward requires a more sophisticated collection of tricks.  Most notably, it is often useful to consider the normalizer of an intersection of Sylow $p$-subgroups.
+
+\begin{theorem}
+There are no simple groups of order 144.
+\end{theorem}
+
+%strengthening the 1 mod p result
+
+\section{A simple abstraction for simple theorem proving}
+
+The goal of this work was to design an environment in which we could automatically prove that there are no simple groups of order $n$ for various values of $n$.  
+
+One approach to this problem is a fully ad-hoc solution, where we specify a specific series of steps to be applied in order.  Such a program might start by directly applying Sylow's theorems to obtain a list of the possible numbers of Sylow $p$-subgroups for each $p$ dividing $n$.  Several of these numbers can often be ruled out immediately if they force $G$ to embed into an alternating group which is too small.  Following that, the program can obtain a lower bound for the number of elements of $p$-power order for various values of $p$.  If the total number of prime power order exceeds $n$, then we derive an immediate contradiction and conclude that there are no simple groups of order $n$.  This approach works well for many small values of $n$.  In fact the first composite $n$ for which this sequence of steps fails (other than $60 = |A_5|$) is $90.$ Unfortunately this approach fails to extend easily to other more sophisticated techniques.  To add a new technique, a substantial amount of the code base must be changed in order to keep track of the various quantities needed to implement the new method.
+
+At the other end of the spectrum, one could imagine a program that is fully-automatic.  Such a program would take as input the definition of a group, along with some basic facts about finite groups and integers, and use those facts in order to prove that there are no simple groups of a given order.  This would require encoding the rules of first-order logic, which is a challenge in itself.  But even more, it would require the computer to prune its search space intelligently, in order to avoid combinatorial explosion when looking for a proof.
+
+We opt for a hybrid of these extremes.  Our approach is to provide the computer with a list of techniques which are known to be useful when proving that there are no simple groups of order $n$.  In our framework, a technique (or theorem) is simply an object that takes in a collection of facts, performs some well-defined series of operations, and then outputs a collection of facts.  This as an advantage over the fully ad-hoc approach of being extensible. Implementing a new method simply involves adding a new object to the list of techniques; none of the core theorem-proving code needs to be changed.  Similarly, it is straightforward to remove a particular method, as this only involves deleting a single line of code.
+
+On the other hand, we avoid the combinatorial explosion faced by the purely automatic approach by carefully selecting a collection of techniques which are fairly course-grained.  For example, our implementation does not need to know the definition of a group.  Instead it is programmed to work with higher level techniques, such as Sylow's theorems, and the counting method.  Our techniques are sufficiently targeted that each applies only rarely.  This allows us to take a brute-force approach to theorem-proving, while avoiding combinatorial explosion.  At the same time our implementation is sufficiently general that it can handle additional techniques, as well as well as other types of theorems.
+
+\subsection{Facts and Techniques}
+
+Within our framework, a \textit{simple fact} consists simply of a name (which is a string), followed by an (ordered) list of strings which are thought of as a set of arguments for a given type of fact.  For example the fact, (group, [G]) expresses the logical statement ``$G$ is a group". In a similar way, the fact (order, [G,n]) expresses the statement ``the order of G is $n$"  (while $n$ is formally a string within our framework, we generally convert it to an integer before working with it).  We make note that the logical description associated to a fact is only for the sake of human understanding, and is not used by our program.
+
+It is useful to be able to describe more complicated facts which are connected by a logical or.  To express such facts, we define a \textit{disjunction} type which simply consists of a list of facts.  The interpretation is that a disjunction is true if at least one of its component facts is true (though formally, our program does not manipulate truth values).  For convenience we will generally write OR(fact1, fact2) as shorthand for the disjunction object containing fact1 and fact2.
+
+A \textit{technique} or theorem is a map that takes as input certain lists of facts, outputs a new list of facts.  Each theorem contains a template which describes the collections of facts which form a valid input to the theorem.  Formally a template is simply a list of facts.  We say that a list of facts $\mathcal{F}$ matches the template if $\mathcal{F}$ is equivalent to the template up to a relabelling of its arguments.  For example if [(foo, [A, B]), (foo[A, C])] is our template, then [(foo,[X,Y]), (foo,[X,Z])] and [(foo,[X,X]),(foo,[X,X])] both match the template, while [(foo,[W,X]), (foo,[Y,Z])] and [(bar,[X,Y]), (bar,[X,Z])] do not.  A list of facts is a valid input for a theorem if and only if it matches the theorem's template.  
+
+Given a valid list of input facts, a theorem may output a list of output facts in an arbitrary way, and the output facts may consist of either simple facts or disjunctions (or both).  Of course we generally define our theorems in a way that aligns with standard mathematical results.  For example, the theorem ``sylow" takes a list of inputs matching the template [(group, [G]), (order, [G], n)] and outputs a list of disjunctions corresponding to the possible numbers of Sylow subgroups for each prime dividing $n$.  When $n=10,$ such an output would read [ OR((numSylow, [2, G, 1]), (numSylow, [2, G, 5])), OR((numSylow, [5, G, 1])). The fact (numSylow, [2,G,1]) is interpreted as ``the number of Sylow $2$-subgroups of $G$ is $1$."  Note that the output list of facts contains the character $G$.  This is intended to match the template.  If the facts [(group, [H]), (order, [H], 10)] were input into the theorem instead, the result would be the same, however G would be replaced by H.
+
+We complicate this model slightly for implementation purposes.  A fact output by a theorem may contain an argument which is a string beginning with a question mark (e.g. ?T).  This means that ?T is a wildcard character whose value will be decided later.   The reason for this is that we would like theorems to be able to state the existence of new mathematical objects.  Within our framework such an object must be given a name, but that name should not collide with a string that is already in use.  A theorem object does not have a broad enough scope to see the other strings that are currently in use, so the wildcard character is our way of delegating the task of choosing names elsewhere.  A typical use of the wildcard character is to express the fact "there exists a group of order $n$".  A theorem that wants to return such a fact might return $[(group, [?G]), (order,[?G,n])].$  The string ?G will be replaced a new name later on.
+
+We also allow the strings in our templates to start with the special character '*'. This indicates that we do not allow this string to be renamed in the usual way when deciding template matching.  The typical use of this is for an input fact such as (order, H, *1), where a specific number is important. The *1 indicates that the string 1 may not be replaced with any other value when template matching.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\end{document}  
